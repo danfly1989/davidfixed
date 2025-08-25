@@ -40,7 +40,7 @@ char	*ft_expand_token(char *token, t_dat *data, int qt, size_t i)
 
 char	**ft_expand_tokens(t_dat *d, char **tokens, int *qtypes, int i)
 {
-	char **expanded;
+	char	**expanded;
 
 	while (tokens[i])
 		i++;
@@ -60,4 +60,30 @@ char	**ft_expand_tokens(t_dat *d, char **tokens, int *qtypes, int i)
 	}
 	expanded[i] = NULL;
 	return (expanded);
+}
+
+char	**ft_tokenize_line(t_dat *d, char *str, int **quote_types_out)
+{
+	char **tokens;
+	int *quote_types;
+
+	ft_reset_iterators(d);
+	d->k = ft_count_tokens(str);
+	tokens = malloc(sizeof(char *) * (d->k + 1));
+	quote_types = malloc(sizeof(int) * (d->k + 1));
+	if (!tokens || !quote_types)
+		return (ft_free_token_quote(tokens, quote_types));
+	while (str[d->i])
+	{
+		while (str[d->i] == ' ')
+			d->i++;
+		if (!str[d->i])
+			break ;
+		tokens[d->j] = ft_extract_token(str, d, &quote_types[d->j]);
+		d->j++;
+	}
+	tokens[d->j] = NULL;
+	quote_types[d->j] = -1;
+	*quote_types_out = quote_types;
+	return (tokens);
 }

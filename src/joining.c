@@ -36,11 +36,28 @@ char	*append_char(char *res, char *token, int *i)
 
 char	*ft_strjoin_free(char *s1, char *s2)
 {
-	char *joined;
+	char	*joined;
 
 	if (!s1 || !s2)
 		return (NULL);
 	joined = ft_strjoin(s1, s2);
 	free(s1);
 	return (joined);
+}
+
+char	*ft_strjoin_char(const char *s, char c)
+{
+	char *new;
+	size_t len;
+
+	if (!s)
+		return (NULL);
+	len = ft_strlen(s);
+	new = malloc(len + 2);
+	if (!new)
+		return (NULL);
+	ft_strlcpy(new, s, len + 1);
+	new[len] = c;
+	new[len + 1] = '\0';
+	return (new);
 }

@@ -38,7 +38,7 @@ void	ft_free_redirection(t_rdr *r)
 
 void	ft_free_string_array(char **str_array)
 {
-	int i;
+	int	i;
 
 	if (str_array == NULL)
 		return ;
@@ -49,4 +49,12 @@ void	ft_free_string_array(char **str_array)
 		i++;
 	}
 	free(str_array);
+}
+
+void	*ft_free_error_expanded(char **expanded, int i)
+{
+	while (--i >= 0)
+		free(expanded[i]);
+	free(expanded);
+	return (NULL);
 }

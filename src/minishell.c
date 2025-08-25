@@ -12,22 +12,6 @@
 
 #include "minishell.h"
 
-int	ft_strisspace(char *str)
-{
-	int	i;
-
-	if (!str)
-		return (0);
-	i = 0;
-	while (str[i] && str[i] != '\0')
-	{
-		if (!ft_isspace(str[i]))
-			return (0);
-		i++;
-	}
-	return (1);
-}
-
 void	ft_reset_iterators(t_dat *data)
 {
 	data->i = 0;
@@ -35,32 +19,6 @@ void	ft_reset_iterators(t_dat *data)
 	data->k = 0;
 	data->tot = 0;
 	data->st = 0;
-}
-
-char	**ft_tokenize_line(t_dat *d, char *str, int **quote_types_out)
-{
-	char	**tokens;
-	int		*quote_types;
-
-	ft_reset_iterators(d);
-	d->k = ft_count_tokens(str);
-	tokens = malloc(sizeof(char *) * (d->k + 1));
-	quote_types = malloc(sizeof(int) * (d->k + 1));
-	if (!tokens || !quote_types)
-		return (ft_free_token_quote(tokens, quote_types));
-	while (str[d->i])
-	{
-		while (str[d->i] == ' ')
-			d->i++;
-		if (!str[d->i])
-			break ;
-		tokens[d->j] = ft_extract_token(str, d, &quote_types[d->j]);
-		d->j++;
-	}
-	tokens[d->j] = NULL;
-	quote_types[d->j] = -1;
-	*quote_types_out = quote_types;
-	return (tokens);
 }
 
 char	*ft_get_var_value(t_va *list, const char *name)
@@ -94,23 +52,6 @@ char	*ft_extract_var_key(const char *str, size_t *i)
 	return (key);
 }
 
-char	*ft_strjoin_char(const char *s, char c)
-{
-	char	*new;
-	size_t	len;
-
-	if (!s)
-		return (NULL);
-	len = ft_strlen(s);
-	new = malloc(len + 2);
-	if (!new)
-		return (NULL);
-	ft_strlcpy(new, s, len + 1);
-	new[len] = c;
-	new[len + 1] = '\0';
-	return (new);
-}
-
 void	ft_expand_loop(char *token, t_dat *data, char **res, size_t *i)
 {
 	char	*key;
@@ -132,80 +73,6 @@ void	ft_expand_loop(char *token, t_dat *data, char **res, size_t *i)
 		free(tmp);
 	}
 	free(key);
-}
-
-void	*ft_free_error_expanded(char **expanded, int i)
-{
-	while (--i >= 0)
-		free(expanded[i]);
-	free(expanded);
-	return (NULL);
-}
-
-void	ft_strip_surrounding_quotes(char *s)
-{
-	size_t	len;
-	size_t	j;
-
-	len = ft_strlen(s);
-	if (len >= 2 && ((s[0] == '"' && s[len - 1] != '"') || (s[0] == '\''
-				&& s[len - 1] != '\'')))
-		return ;
-	if (len >= 2 && ((s[0] == '"' && s[len - 1] == '"') || (s[0] == '\''
-				&& s[len - 1] == '\'')))
-	{
-		j = 1;
-		while (j < len - 1)
-		{
-			s[j - 1] = s[j];
-			j++;
-		}
-		s[j - 1] = '\0';
-	}
-}
-
-void	ft_strip_quotes_after_equal(char *s)
-{
-	char	*eq;
-	char	quote;
-	size_t	j;
-	size_t	len;
-
-	eq = ft_strchr(s, '=');
-	len = ft_strlen(s);
-	if (eq && ((eq[1] == '"' && s[len - 1] != '"') || (eq[1] == '\'' && s[len
-				- 1] != '\'')))
-		return ;
-	if (eq && ((eq[1] == '"' && s[len - 1] == '"') || (eq[1] == '\'' && s[len
-				- 1] == '\'')))
-	{
-		quote = eq[1];
-		j = 0;
-		while (eq[2 + j] && eq[2 + j] != quote)
-		{
-			eq[1 + j] = eq[2 + j];
-			j++;
-		}
-		eq[1 + j] = '\0';
-	}
-}
-
-void	ft_strip_quotes_from_xln(t_dat *d)
-{
-	size_t	i;
-
-	i = 0;
-	if (!d || !d->xln)
-		return ;
-	while (d->xln[i])
-	{
-		if (d->xln[i])
-		{
-			ft_strip_surrounding_quotes(d->xln[i]);
-			ft_strip_quotes_after_equal(d->xln[i]);
-		}
-		i++;
-	}
 }
 
 int	ft_valid_var(char *str)
@@ -312,24 +179,6 @@ int	ft_all_valid_lvar(t_dat *data, char **arr)
 			data->st = i;
 			return (0);
 		}
-		i++;
-	}
-	return (1);
-}
-
-int	ft_is_number(const char *str)
-{
-	size_t	i;
-
-	if (str == NULL || *str == '\0')
-		return (0);
-	i = 0;
-	if (str[i] == '+' || str[i] == '-')
-		i++;
-	while (str[i] != '\0')
-	{
-		if (ft_isdigit(str[i]) == 0)
-			return (0);
 		i++;
 	}
 	return (1);
@@ -1439,21 +1288,6 @@ int	ft_syntax_error(char *token)
 	else
 		write(2, mes2, ft_strlen(mes2));
 	return (0);
-}
-
-int	ft_check_redir(char **tokens, int i)
-{
-	if (!tokens[i + 1] || ft_is_redirection(tokens[i + 1])
-		|| !ft_strcmp(tokens[i + 1], "|"))
-		return (ft_syntax_error(tokens[i + 1]));
-	return (1);
-}
-
-int	ft_check_pipe(char **tokens, int i)
-{
-	if (i == 0 || !tokens[i + 1] || ft_is_redirection(tokens[i + 1]))
-		return (ft_syntax_error(tokens[i + 1]));
-	return (1);
 }
 
 int	ft_validate_syntax(char **tokens)
