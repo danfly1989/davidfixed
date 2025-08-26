@@ -37,22 +37,6 @@ void	ft_cleanup_exit(t_dat *data, int flag)
 	exit(flag);
 }
 
-void	ft_free_list(t_va *head)
-{
-	t_va	*tmp;
-
-	while (head != NULL)
-	{
-		tmp = head;
-		head = head->next;
-		if (tmp->name)
-			free(tmp->name);
-		if (tmp->value)
-			free(tmp->value);
-		free(tmp);
-	}
-}
-
 char	*ft_expand_exit_status(t_dat *d, char *token)
 {
 	char	*res;
@@ -94,9 +78,18 @@ void	ft_exit(t_dat *data, size_t k)
 	ft_cleanup_exit(data, status % 256);
 }
 
-void	ft_exit_numeric_error(char *arg)
+char	***ft_clean_cmd(char ***cmd)
 {
-	write(2, "minishell: exit: ", 18);
-	write(2, arg, ft_strlen(arg));
-	write(2, ": numeric argument required\n", 29);
+	int	i;
+
+	if (!cmd)
+		return (NULL);
+	i = 0;
+	while (cmd[i])
+	{
+		ft_free_string_array(cmd[i]);
+		i++;
+	}
+	free(cmd);
+	return (NULL);
 }

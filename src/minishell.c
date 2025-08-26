@@ -97,18 +97,6 @@ void	ft_update_directories(t_dat *data, char *oldpwd)
 	free(newpwd);
 }
 
-void	ft_cd_error(char *path)
-{
-	char	*msg;
-
-	msg = strerror(errno);
-	write(2, "minishell: cd: ", 15);
-	write(2, path, ft_strlen(path));
-	write(2, ": ", 2);
-	write(2, msg, ft_strlen(msg));
-	write(2, "\n", 1);
-}
-
 void	ft_unset_multi_var(t_dat *d, size_t k)
 {
 	int	i;
@@ -240,56 +228,6 @@ void	ft_export_error(char *arg, char *message)
 	write(2, "': ", 3);
 	write(2, message, ft_strlen(message));
 	write(2, "\n", 1);
-}
-
-void	ft_export_multi_var(t_dat *data, size_t k)
-{
-	char	*message;
-	int		i;
-
-	message = "not a valid identifier";
-	if (data->xln[k + 1] == NULL)
-	{
-		ft_print_sorted_env(data->ev);
-		return ;
-	}
-	i = 1;
-	while (data->xln[k + i] != NULL)
-	{
-		if (ft_valid_var(data->xln[k + i]) == 1)
-		{
-			ft_export_type1(&data->ev, data->xln[k + i], NULL, NULL);
-			ft_add_local_var(data, data->xln[k + i]);
-		}
-		else if (ft_var_name_only(data->xln[k + i]) == 1)
-			ft_export_type2(data, data->xln[k + i]);
-		else
-			ft_export_error(data->xln[k + i], message);
-		i++;
-	}
-}
-
-int	ft_handle_builtin(t_dat *data, size_t k)
-{
-	if (data == NULL || data->xln == NULL)
-		return (0);
-	if (ft_strcmp(data->xln[k], "pwd") == 0)
-		ft_pwd();
-	else if (ft_strcmp(data->xln[k], "cd") == 0)
-		ft_change_directory(data, k);
-	else if (ft_strcmp(data->xln[k], "echo") == 0)
-		ft_echo(data->xln, k);
-	else if (ft_strcmp(data->xln[k], "exit") == 0)
-		ft_exit(data, k);
-	else if (ft_strcmp(data->xln[k], "env") == 0)
-		ft_env(data);
-	else if (ft_strcmp(data->xln[k], "unset") == 0)
-		ft_unset_multi_var(data, k);
-	else if (ft_strcmp(data->xln[k], "export") == 0)
-		ft_export_multi_var(data, k);
-	else
-		return (0);
-	return (1);
 }
 
 void	ft_check_var_assign_and_expand_line(t_dat *data, char *line)
@@ -465,81 +403,6 @@ void	ft_external_functions(t_dat *data, char *line)
 	ft_free_string_array(data->evs);
 }
 
-char	***ft_clean_cmd(char ***cmd)
-{
-	int	i;
-
-	if (!cmd)
-		return (NULL);
-	i = 0;
-	while (cmd[i])
-	{
-		ft_free_string_array(cmd[i]);
-		i++;
-	}
-	free(cmd);
-	return (NULL);
-}
-
-int	ft_parse_cmd_helper(t_dat *d, char ***cmd, int *idx, int *st_i)
-{
-	int	i;
-
-	i = st_i[1];
-	if (i < st_i[0])
-		return (0);
-	if (!ft_validate_segment(d->xln, st_i[0], i))
-		return (0);
-	cmd[*idx] = ft_extract_tokens(d, st_i[0], i);
-	if (!cmd[*idx])
-		return (0);
-	(*idx)++;
-	st_i[0] = i + 1;
-	return (1);
-}
-
-char	***ft_parse_cmd(t_dat *d, int st, int i, int idx)
-{
-	char	***cmd;
-	int		st_i[2];
-
-	d->k = ft_count_pipes(d->xln) + 1;
-	cmd = ft_calloc(d->k + 1, sizeof(char **));
-	if (!cmd)
-		return (NULL);
-	st_i[0] = st;
-	while (1)
-	{
-		st_i[1] = i;
-		if (!d->xln[i] || !ft_strcmp(d->xln[i], "|"))
-		{
-			if (!ft_parse_cmd_helper(d, cmd, &idx, st_i))
-				return (ft_clean_cmd(cmd));
-			if (!d->xln[i])
-				break ;
-		}
-		i++;
-	}
-	cmd[idx] = NULL;
-	d->tot = idx;
-	return (cmd);
-}
-
-void	ft_free_fd(int **fd)
-{
-	int	i;
-
-	if (!fd)
-		return ;
-	i = 0;
-	while (fd[i])
-	{
-		free(fd[i]);
-		i++;
-	}
-	free(fd);
-}
-
 int	**init_fd_array(int tot)
 {
 	int	**fd;
@@ -591,43 +454,6 @@ void	ft_setup_io(int **fd, size_t i, size_t total)
 		dup2(fd[i - 1][0], STDIN_FILENO);
 	if (i < total - 1)
 		dup2(fd[i][1], STDOUT_FILENO);
-}
-
-int	ft_is_builtin(char *cmd)
-{
-	if (!ft_strcmp(cmd, "pwd"))
-		return (1);
-	if (!ft_strcmp(cmd, "cd"))
-		return (1);
-	if (!ft_strcmp(cmd, "echo"))
-		return (1);
-	if (!ft_strcmp(cmd, "exit"))
-		return (1);
-	if (!ft_strcmp(cmd, "export"))
-		return (1);
-	if (!ft_strcmp(cmd, "unset"))
-		return (1);
-	if (!ft_strcmp(cmd, "env"))
-		return (1);
-	return (0);
-}
-
-void	ft_execute_builtin_in_child(t_dat *d, char **cmd)
-{
-	if (!ft_strcmp(cmd[0], "pwd"))
-		ft_pwd();
-	else if (!ft_strcmp(cmd[0], "cd"))
-		ft_change_directory(d, 0);
-	else if (!ft_strcmp(cmd[0], "echo"))
-		ft_echo(cmd, 0);
-	else if (!ft_strcmp(cmd[0], "exit"))
-		ft_exit(d, 0);
-	else if (!ft_strcmp(cmd[0], "env"))
-		ft_env(d);
-	else if (!ft_strcmp(cmd[0], "unset"))
-		ft_unset_multi_var(d, 0);
-	else if (!ft_strcmp(cmd[0], "export"))
-		ft_export_multi_var(d, 0);
 }
 
 void	ft_child_process(t_dat *d, char ***cmd, int **fd, size_t i)

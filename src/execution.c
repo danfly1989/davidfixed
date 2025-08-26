@@ -61,3 +61,21 @@ void	ft_exec_command(t_dat *d, char **cmd)
 	perror("execve");
 	exit(1);
 }
+
+void	ft_execute_builtin_in_child(t_dat *d, char **cmd)
+{
+	if (!ft_strcmp(cmd[0], "pwd"))
+		ft_pwd();
+	else if (!ft_strcmp(cmd[0], "cd"))
+		ft_change_directory(d, 0);
+	else if (!ft_strcmp(cmd[0], "echo"))
+		ft_echo(cmd, 0);
+	else if (!ft_strcmp(cmd[0], "exit"))
+		ft_exit(d, 0);
+	else if (!ft_strcmp(cmd[0], "env"))
+		ft_env(d);
+	else if (!ft_strcmp(cmd[0], "unset"))
+		ft_unset_multi_var(d, 0);
+	else if (!ft_strcmp(cmd[0], "export"))
+		ft_export_multi_var(d, 0);
+}

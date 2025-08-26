@@ -36,8 +36,8 @@ char	*ft_extract_var_name(char *str)
 
 char	*ft_extract_var_value(char *str, char quote, size_t len)
 {
-	char *val;
-	size_t i;
+	char	*val;
+	size_t	i;
 
 	if (!str || str[0] == '\0')
 		return (NULL);

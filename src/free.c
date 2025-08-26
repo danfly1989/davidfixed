@@ -58,3 +58,34 @@ void	*ft_free_error_expanded(char **expanded, int i)
 	free(expanded);
 	return (NULL);
 }
+
+void	ft_free_fd(int **fd)
+{
+	int	i;
+
+	if (!fd)
+		return ;
+	i = 0;
+	while (fd[i])
+	{
+		free(fd[i]);
+		i++;
+	}
+	free(fd);
+}
+
+void	ft_free_list(t_va *head)
+{
+	t_va	*tmp;
+
+	while (head != NULL)
+	{
+		tmp = head;
+		head = head->next;
+		if (tmp->name)
+			free(tmp->name);
+		if (tmp->value)
+			free(tmp->value);
+		free(tmp);
+	}
+}
