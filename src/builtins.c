@@ -1,0 +1,73 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   builtins.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: daflynn <daflynn@student.42berlin.de>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/26 14:10:00 by daflynn           #+#    #+#             */
+/*   Updated: 2025/08/26 14:10:07 by daflynn          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "minishell.h"
+
+void	ft_pwd(void)
+{
+	char	*cwd;
+
+	cwd = getcwd(NULL, 0);
+	if (cwd == NULL)
+	{
+		perror("pwd error");
+		return ;
+	}
+	printf("%s\n", cwd);
+	free(cwd);
+}
+
+void	ft_change_directory(t_dat *data, size_t k)
+{
+	char	*path;
+	char	*oldpwd;
+
+	oldpwd = getcwd(NULL, 0);
+	if (data->xln[k + 1] == NULL || ft_strcmp(data->xln[k + 1], "~") == 0)
+	{
+		path = ft_get_val_from_list(data->ev, "HOME");
+		if (path == NULL)
+		{
+			write(2, "cd: HOME not set\n", 17);
+			return ;
+		}
+	}
+	else
+		path = data->xln[k + 1];
+	if (chdir(path) == 0)
+		ft_update_directories(data, oldpwd);
+	else
+		ft_cd_error(path);
+}
+
+void	ft_echo(char **arr, size_t k)
+{
+	int	i;
+	int	newline;
+
+	i = 1;
+	newline = 1;
+	while (arr[k + i] != NULL && ft_strncmp(arr[k + i], "-n", 2) == 0)
+	{
+		newline = 0;
+		i++;
+	}
+	while (arr[k + i] != NULL)
+	{
+		printf("%s", arr[k + i]);
+		i++;
+		if (arr[k + i] != NULL)
+			printf(" ");
+	}
+	if (newline)
+		printf("\n");
+}

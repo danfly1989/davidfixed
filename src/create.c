@@ -52,8 +52,8 @@ t_va	*ft_create_node(char *str)
 
 t_va	*ft_create_var_node(char *str)
 {
-	t_va *node;
-	char *equal_pos;
+	t_va	*node;
+	char	*equal_pos;
 
 	if (!str)
 		return (NULL);

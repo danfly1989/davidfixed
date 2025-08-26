@@ -21,37 +21,6 @@ void	ft_reset_iterators(t_dat *data)
 	data->st = 0;
 }
 
-char	*ft_get_var_value(t_va *list, const char *name)
-{
-	size_t	n;
-
-	n = ft_strlen(name);
-	while (list)
-	{
-		if (list->name && ft_strncmp(list->name, name, n) == 0)
-			return (list->value);
-		list = list->next;
-	}
-	return (NULL);
-}
-
-char	*ft_extract_var_key(const char *str, size_t *i)
-{
-	size_t	start;
-	char	*key;
-
-	start = *i;
-	if (str[*i] == '?')
-	{
-		(*i)++;
-		return (ft_strdup("?"));
-	}
-	while (str[*i] && (ft_isalnum(str[*i]) || str[*i] == '_'))
-		(*i)++;
-	key = ft_substr(str, start, *i - start);
-	return (key);
-}
-
 void	ft_expand_loop(char *token, t_dat *data, char **res, size_t *i)
 {
 	char	*key;
@@ -73,91 +42,6 @@ void	ft_expand_loop(char *token, t_dat *data, char **res, size_t *i)
 		free(tmp);
 	}
 	free(key);
-}
-
-int	ft_valid_var(char *str)
-{
-	size_t	i;
-
-	if (!str || (!ft_isalpha(str[0]) && str[0] != '_'))
-		return (0);
-	i = 1;
-	while (str[i] && str[i] != '=')
-	{
-		if (!ft_isalnum(str[i]) && str[i] != '_')
-			return (0);
-		i++;
-	}
-	if (str[i] != '=')
-		return (0);
-	return (1);
-}
-
-t_va	*ft_find_var(t_va *list, const char *name)
-{
-	while (list)
-	{
-		if (list->name && ft_strncmp(list->name, name, ft_strlen(name)) == 0)
-			return (list);
-		list = list->next;
-	}
-	return (NULL);
-}
-
-int	ft_update_var_value(t_va *node, const char *value)
-{
-	char	*new_value;
-
-	new_value = ft_strdup(value);
-	if (!new_value)
-		return (0);
-	free(node->value);
-	node->value = new_value;
-	return (1);
-}
-
-int	ft_add_local_var(t_dat *data, char *str)
-{
-	t_va	*new_node;
-	t_va	*last;
-
-	new_node = ft_create_var_node(str);
-	if (!new_node)
-		return (0);
-	if (!data->lo)
-	{
-		data->lo = new_node;
-		return (1);
-	}
-	last = data->lo;
-	while (last->next)
-		last = last->next;
-	last->next = new_node;
-	return (1);
-}
-
-void	ft_update_local_variables(t_dat *d)
-{
-	int		i;
-	char	*name;
-	t_va	*node;
-
-	if (!d || !d->xln)
-		return ;
-	i = 0;
-	while (d->xln[i])
-	{
-		name = ft_extract_var_name(d->xln[i]);
-		if (!name)
-			return ;
-		node = ft_find_var(d->lo, name);
-		if (node)
-			ft_update_var_value(node, ft_strchr(d->xln[i], '=') + 1);
-		else
-			ft_add_local_var(d, d->xln[i]);
-		free(name);
-		i++;
-	}
 }
 
 int	ft_all_valid_lvar(t_dat *data, char **arr)
@@ -202,63 +86,6 @@ char	*ft_get_val_from_list(t_va *head, const char *key)
 	return (NULL);
 }
 
-int	ft_update_existing_var(t_va *node, const char *name, const char *val)
-{
-	while (node)
-	{
-		if (ft_strncmp(node->name, name, ft_strlen(name)) == 0)
-		{
-			free(node->value);
-			node->value = ft_strdup(val);
-			if (!node->value)
-				perror("minishell: malloc error");
-			return (1);
-		}
-		node = node->next;
-	}
-	return (0);
-}
-
-void	ft_create_env_variable(t_dat *d, const char *name, const char *value)
-{
-	t_va	*new_node;
-
-	new_node = malloc(sizeof(t_va));
-	if (!new_node)
-		return (perror("minishell: malloc error"));
-	new_node->name = ft_strdup(name);
-	new_node->value = ft_strdup(value);
-	new_node->next = d->ev;
-	d->ev = new_node;
-	if (!new_node->name || !new_node->value)
-	{
-		free(new_node->name);
-		free(new_node->value);
-		free(new_node);
-		perror("minishell: malloc error");
-	}
-}
-
-void	ft_update_env_variable(t_dat *d, const char *name, const char *value)
-{
-	if (!ft_update_existing_var(d->ev, name, value))
-		ft_create_env_variable(d, name, value);
-}
-
-void	ft_pwd(void)
-{
-	char	*cwd;
-
-	cwd = getcwd(NULL, 0);
-	if (cwd == NULL)
-	{
-		perror("pwd error");
-		return ;
-	}
-	printf("%s\n", cwd);
-	free(cwd);
-}
-
 void	ft_update_directories(t_dat *data, char *oldpwd)
 {
 	char	*newpwd;
@@ -280,92 +107,6 @@ void	ft_cd_error(char *path)
 	write(2, ": ", 2);
 	write(2, msg, ft_strlen(msg));
 	write(2, "\n", 1);
-}
-
-void	ft_change_directory(t_dat *data, size_t k)
-{
-	char	*path;
-	char	*oldpwd;
-
-	oldpwd = getcwd(NULL, 0);
-	if (data->xln[k + 1] == NULL || ft_strcmp(data->xln[k + 1], "~") == 0)
-	{
-		path = ft_get_val_from_list(data->ev, "HOME");
-		if (path == NULL)
-		{
-			write(2, "cd: HOME not set\n", 17);
-			return ;
-		}
-	}
-	else
-		path = data->xln[k + 1];
-	if (chdir(path) == 0)
-		ft_update_directories(data, oldpwd);
-	else
-		ft_cd_error(path);
-}
-
-void	ft_echo(char **arr, size_t k)
-{
-	int	i;
-	int	newline;
-
-	i = 1;
-	newline = 1;
-	while (arr[k + i] != NULL && ft_strncmp(arr[k + i], "-n", 2) == 0)
-	{
-		newline = 0;
-		i++;
-	}
-	while (arr[k + i] != NULL)
-	{
-		printf("%s", arr[k + i]);
-		i++;
-		if (arr[k + i] != NULL)
-			printf(" ");
-	}
-	if (newline)
-		printf("\n");
-}
-
-void	ft_exit_numeric_error(char *arg)
-{
-	write(2, "minishell: exit: ", 18);
-	write(2, arg, ft_strlen(arg));
-	write(2, ": numeric argument required\n", 29);
-}
-
-void	ft_exit(t_dat *data, size_t k)
-{
-	int	status;
-
-	if (data->xln[k + 1] && data->xln[k + 2])
-	{
-		write(2, "minishell: exit: too many arguments\n", 36);
-		return ;
-	}
-	rl_clear_history();
-	if (data->xln[k + 1] == NULL)
-		ft_cleanup_exit(data, 0);
-	if (ft_is_number(data->xln[k + 1]) == 0)
-	{
-		ft_exit_numeric_error(data->xln[k + 1]);
-		ft_cleanup_exit(data, 255);
-	}
-	status = ft_atoi(data->xln[k + 1]);
-	ft_cleanup_exit(data, status % 256);
-}
-
-void	ft_env(t_dat *data)
-{
-	t_va	*cur;
-
-	cur = data->ev;
-	while (cur != NULL)
-	{
-		printf("%s=%s\n", cur->name, cur->value);
-		cur = cur->next;
-	}
 }
 
 void	ft_unset_multi_var(t_dat *d, size_t k)
@@ -425,101 +166,6 @@ int	ft_var_name_only(char *str)
 	return (1);
 }
 
-void	ft_append_env_var(t_dat *data, char *key, char *value)
-{
-	t_va	*new;
-	t_va	*cur;
-
-	new = malloc(sizeof(t_va));
-	if (!new)
-		return ;
-	new->name = ft_strdup(key);
-	new->value = ft_strdup(value);
-	new->next = NULL;
-	cur = data->ev;
-	if (!cur)
-	{
-		data->ev = new;
-		return ;
-	}
-	while (cur->next)
-		cur = cur->next;
-	cur->next = new;
-}
-
-void	ft_export_type2(t_dat *data, char *str)
-{
-	char	*name;
-	char	*val;
-	t_va	*cur;
-
-	val = NULL;
-	name = str;
-	cur = data->lo;
-	while (cur)
-	{
-		if (ft_strncmp(cur->name, name, ft_strlen(name)) == 0)
-		{
-			val = cur->value;
-			break ;
-		}
-		cur = cur->next;
-	}
-	if (val)
-		ft_append_env_var(data, name, val);
-}
-
-t_va	*ft_export_type1_ext(char *name, char *val)
-{
-	t_va	*new;
-
-	new = malloc(sizeof(t_va));
-	new->name = name;
-	new->value = ft_strdup(val);
-	new->next = NULL;
-	return (new);
-}
-
-void	ft_export_type1(t_va **head, char *s, char *name, char *val)
-{
-	t_va	*cur;
-	t_va	*new;
-	t_va	*prev;
-
-	name = ft_extract_var_name(s);
-	val = ft_strchr(s, '=') + 1;
-	cur = *head;
-	while (cur)
-	{
-		if (ft_strcmp(cur->name, name) == 0)
-		{
-			free(cur->value);
-			cur->value = ft_strdup(val);
-			free(name);
-			return ;
-		}
-		prev = cur;
-		cur = cur->next;
-	}
-	new = ft_export_type1_ext(name, val);
-	if (prev)
-		prev->next = new;
-	else
-		*head = new;
-}
-
-void	ft_print_export(t_va *head)
-{
-	t_va	*cur;
-
-	cur = head;
-	while (cur != NULL)
-	{
-		printf("declare -x %s=\"%s\"\n", cur->name, cur->value);
-		cur = cur->next;
-	}
-}
-
 t_va	*ft_merge_sorted_lists(t_va *a, t_va *b)
 {
 	t_va	*result;
@@ -575,67 +221,6 @@ void	ft_sort_list_by_name(t_va **head_ref)
 	ft_sort_list_by_name(&a);
 	ft_sort_list_by_name(&b);
 	*head_ref = ft_merge_sorted_lists(a, b);
-}
-
-t_va	*ft_duplicate_node(const t_va *node)
-{
-	t_va	*new;
-
-	new = malloc(sizeof(t_va));
-	if (new == NULL)
-		return (NULL);
-	new->name = ft_strdup(node->name);
-	new->value = ft_strdup(node->value);
-	new->next = NULL;
-	if (new->name == NULL || new->value == NULL)
-	{
-		free(new->name);
-		free(new->value);
-		free(new);
-		return (NULL);
-	}
-	return (new);
-}
-
-int	ft_append_dup_node(const t_va *cur, t_va **head, t_va **tail)
-{
-	t_va	*new_node;
-
-	new_node = ft_duplicate_node(cur);
-	if (new_node == NULL)
-	{
-		ft_free_list(*head);
-		return (0);
-	}
-	if (*tail == NULL)
-	{
-		*head = new_node;
-		*tail = new_node;
-	}
-	else
-	{
-		(*tail)->next = new_node;
-		*tail = new_node;
-	}
-	return (1);
-}
-
-t_va	*ft_duplicate_list(const t_va *head)
-{
-	const t_va	*cur;
-	t_va		*new_head;
-	t_va		*new_tail;
-
-	cur = head;
-	new_head = NULL;
-	new_tail = NULL;
-	while (cur != NULL)
-	{
-		if (!ft_append_dup_node(cur, &new_head, &new_tail))
-			return (NULL);
-		cur = cur->next;
-	}
-	return (new_head);
 }
 
 void	ft_print_sorted_env(t_va *head)
@@ -855,33 +440,6 @@ void	ft_get_exit_stat(t_dat *d, pid_t pid)
 		d->last_exit_status = WEXITSTATUS(status);
 }
 
-void	ft_ex_single_cmd(t_dat *d, char *cmd_path)
-{
-	pid_t	pid;
-	t_rdr	r;
-
-	if (ft_handle_builtin(d, d->st))
-		return ;
-	ft_set_no_pipe_child_signals(d);
-	ft_parse_redirection(d->xln, &r);
-	if (!ft_apply_sing_redirections(&r, d->xln))
-		exit(1);
-	pid = fork();
-	if (pid == 0)
-	{
-		cmd_path = ft_get_cmd_path(d, d->xln[0], 0);
-		if (!cmd_path)
-			ft_cmd_not_found(d->xln[0]);
-		execve(cmd_path, d->xln, d->evs);
-		exit(1);
-	}
-	else if (pid > 0)
-		ft_get_exit_stat(d, pid);
-	else
-		perror("fork");
-	ft_set_main_signals();
-}
-
 void	ft_external_functions(t_dat *data, char *line)
 {
 	char	***cmd;
@@ -905,30 +463,6 @@ void	ft_external_functions(t_dat *data, char *line)
 	else
 		ft_ex_single_cmd(data, NULL);
 	ft_free_string_array(data->evs);
-}
-
-char	**ft_extract_tokens(t_dat *data, int start, int end)
-{
-	char	**tokens;
-	int		i;
-
-	tokens = malloc((end - start + 1) * sizeof(char *));
-	if (!tokens)
-		return (NULL);
-	i = 0;
-	while (start < end)
-	{
-		tokens[i] = ft_strdup(data->xln[start]);
-		if (!tokens[i])
-		{
-			ft_free_string_array(tokens);
-			return (NULL);
-		}
-		start++;
-		i++;
-	}
-	tokens[i] = NULL;
-	return (tokens);
 }
 
 char	***ft_clean_cmd(char ***cmd)
@@ -1094,29 +628,6 @@ void	ft_execute_builtin_in_child(t_dat *d, char **cmd)
 		ft_unset_multi_var(d, 0);
 	else if (!ft_strcmp(cmd[0], "export"))
 		ft_export_multi_var(d, 0);
-}
-
-void	ft_exec_command(t_dat *d, char **cmd)
-{
-	char	*cmd_path;
-
-	if (ft_is_builtin(cmd[0]))
-	{
-		ft_execute_builtin_in_child(d, cmd);
-		exit(d->last_exit_status);
-	}
-	cmd_path = ft_get_cmd_path(d, cmd[0], 0);
-	if (!cmd_path)
-	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(cmd[0], 2);
-		ft_putendl_fd(": command not found", 2);
-		exit(127);
-	}
-	execve(cmd_path, cmd, d->evs);
-	free(cmd_path);
-	perror("execve");
-	exit(1);
 }
 
 void	ft_child_process(t_dat *d, char ***cmd, int **fd, size_t i)
