@@ -55,7 +55,7 @@ void	ft_set_no_pipe_child_signals(t_dat *d)
 
 void	ft_set_heredoc_signals(void)
 {
-	struct sigaction sa;
+	struct sigaction	sa;
 
 	sa.sa_handler = ft_heredoc_sigint_handler;
 	sigemptyset(&sa.sa_mask);

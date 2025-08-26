@@ -61,3 +61,15 @@ char	*ft_strjoin_char(const char *s, char c)
 	new[len + 1] = '\0';
 	return (new);
 }
+
+char	*ft_join_path(char *str1, char *cmd)
+{
+	char	*temp;
+	char	*full_path;
+
+	temp = ft_strjoin(str1, "/");
+	full_path = ft_strjoin(temp, cmd);
+	free(temp);
+	temp = NULL;
+	return (full_path);
+}

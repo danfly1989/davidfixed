@@ -6,7 +6,7 @@
 /*   By: daflynn <daflynn@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 20:02:06 by daflynn           #+#    #+#             */
-/*   Updated: 2025/08/25 20:02:16 by daflynn          ###   ########.fr       */
+/*   Updated: 2025/08/26 19:23:40 by daflynn          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,10 +53,12 @@ void	ft_strip_surrounding_quotes(char *s)
 	size_t	j;
 
 	len = ft_strlen(s);
-	if (len >= 2 && ((s[0] == '"' && s[len - 1] != '"') || (s[0] == '\''
+	if (len >= 2 && ((s[0] == '"' && s[len - 1] != '"') 
+			|| (s[0] == '\''
 				&& s[len - 1] != '\'')))
 		return ;
-	if (len >= 2 && ((s[0] == '"' && s[len - 1] == '"') || (s[0] == '\''
+	if (len >= 2 && ((s[0] == '"' && s[len - 1] == '"') 
+			|| (s[0] == '\''
 				&& s[len - 1] == '\'')))
 	{
 		j = 1;
@@ -78,11 +80,11 @@ void	ft_strip_quotes_after_equal(char *s)
 
 	eq = ft_strchr(s, '=');
 	len = ft_strlen(s);
-	if (eq && ((eq[1] == '"' && s[len - 1] != '"') || (eq[1] == '\'' && s[len
-				- 1] != '\'')))
+	if (eq && ((eq[1] == '"' && s[len - 1] != '"') 
+			|| (eq[1] == '\'' && s[len - 1] != '\'')))
 		return ;
-	if (eq && ((eq[1] == '"' && s[len - 1] == '"') || (eq[1] == '\'' && s[len
-				- 1] == '\'')))
+	if (eq && ((eq[1] == '"' && s[len - 1] == '"') 
+			|| (eq[1] == '\'' && s[len - 1] == '\'')))
 	{
 		quote = eq[1];
 		j = 0;

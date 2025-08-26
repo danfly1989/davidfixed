@@ -71,3 +71,13 @@ void	ft_append_env_var(t_dat *data, char *key, char *value)
 		cur = cur->next;
 	cur->next = new;
 }
+
+void	ft_print_sorted_env(t_va *head)
+{
+	t_va	*sorted;
+
+	sorted = ft_duplicate_list(head);
+	ft_sort_list_by_name(&sorted);
+	ft_print_export(sorted);
+	ft_free_list(sorted);
+}
